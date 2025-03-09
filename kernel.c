@@ -2,7 +2,8 @@
 #include <stddef.h>
 #include <stdint.h>
 #define MAX_INPUT_LENGTH 100
-
+#define true 1
+#define false 0
 /* Check if the compiler thinks you are targeting the wrong operating system. */
 #if defined(__linux__)
 #error "You are not using a cross-compiler"
@@ -46,6 +47,8 @@ char ascii_chars[128] = {
 
 static char input_buffer[MAX_INPUT_LENGTH];
 static size_t input_length = 0;
+static int key_states[128] = { false }; 
+static int input_ready = false;
 
 inline unsigned char inb(unsigned int port)
 {
@@ -147,38 +150,57 @@ void terminal_writestring(const char *data)
 static void get_input_char()
 {
     uint8_t scancode = inb(0x60);
-    if (scancode & 0x80) return; // key release hence ignored
 
-    if (scancode == 0x1C) // Enter key
-    {
-        terminal_putchar('\n');
-        input_buffer[input_length] = '\0'; // Null-terminate the string
+    if (scancode & 0x80) {
+        // Key release event
+        key_states[scancode & 0x7F] = false; // Mark the key as released
+        return;
 
-        if (strcmp(input_buffer, "hello") == 0) {
-            terminal_writestring("HI, I am Akira OS\n");
-        }
-        else if (strcmp(input_buffer, "help") == 0) {
-            terminal_writestring("Available commands:\n1) hello - get the greet message\n2) help - see available commands\n");
-        }
-        else {
-            terminal_writestring("Unrecognized command, this OS is currently in development phase\n");
-        }
-
-        // Reset input length for the next command
-        input_length = 0;
     }
-    else
-    {
-        if (scancode < 128 && input_length < MAX_INPUT_LENGTH - 1) // Check for buffer overflow
+    // Key press event
+
+    if (!key_states[scancode]) { 
+
+        key_states[scancode] = true; 
+        if (scancode == 0x1C) 
         {
-            char temp[2];
-            temp[0]= ascii_chars[scancode];
-            temp[1]='\0';
-            terminal_writestring(temp);
-            input_buffer[input_length] = temp[0];
-            input_length++;
+            terminal_writestring("\n");
+            input_buffer[input_length] = '\0'; 
+            if (strcmp(input_buffer, "hello") == 0) {
+                terminal_writestring("HI, I am Akira OS\n");
+            }
+            else if (strcmp(input_buffer, "help") == 0) {
+                terminal_writestring("Available commands:\n1) hello - get the greet message\n2) help - see available commands\n");
+            }
+            else {
+                terminal_writestring("Unrecognized command, this OS is currently in development phase\n");
+
+            }
+            input_length = 0; 
         }
+
+        else
+
+        {
+
+            if (scancode < 128 && input_length < MAX_INPUT_LENGTH - 1) 
+
+            {
+
+                char c = ascii_chars[scancode]; // Get the character from the scancode
+
+                terminal_putchar(c); // Print the character to the terminal
+
+                input_buffer[input_length] = c; // Store the character in the input buffer
+
+                input_length++;
+
+            }
+
+        }
+
     }
+
 }
 
 void kernel_main(void)
@@ -187,6 +209,11 @@ void kernel_main(void)
     terminal_initialize();
 
     terminal_writestring("Hello, Welcome to Akira OS!\n");
-    while (true)
+    while (true){
         get_input_char();
+        for(volatile int i=0; i<10000; i++){
+            //we are doing this as while loop is faster 
+            // hence treating single key tap as multiple
+        }
+    }
 }
