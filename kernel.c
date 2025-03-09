@@ -5,12 +5,12 @@
 
 /* Check if the compiler thinks you are targeting the wrong operating system. */
 #if defined(__linux__)
-#error "You are not using a cross-compiler, you will most certainly run into trouble"
+#error "You are not using a cross-compiler"
 #endif
 
-/* This tutorial will only work for the 32-bit ix86 targets. */
+/* This will only work for the 32-bit ix86 targets. */
 #if !defined(__i386__)
-#error "This tutorial needs to be compiled with a ix86-elf compiler"
+#error "This needs to be compiled with a ix86-elf compiler"
 #endif
 
 /* Hardware text mode color constants. */
@@ -62,7 +62,7 @@ char ascii_chars[128] = {
 
     'x', 'y', 'z', '{', '|', '}', '~', 127 };
 
-static void take_input(){
+static void get_input_char(){
 	uint8_t scancode = inb(0x60);
 
 
@@ -159,6 +159,7 @@ void kernel_main(void)
 	terminal_initialize();
 
 	terminal_writestring("Hello, Welcome to Akira World!\n");
-
+	while(true)
+	get_input_char();
 	
 }
