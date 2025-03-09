@@ -1,7 +1,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include<sys/io.h>
+#define MAX_INPUT_LENGTH 100
 
 /* Check if the compiler thinks you are targeting the wrong operating system. */
 #if defined(__linux__)
@@ -14,84 +14,70 @@
 #endif
 
 /* Hardware text mode color constants. */
-enum vga_color {
-	VGA_COLOR_BLACK = 0,
-	VGA_COLOR_BLUE = 1,
-	VGA_COLOR_GREEN = 2,
-	VGA_COLOR_CYAN = 3,
-	VGA_COLOR_RED = 4,
-	VGA_COLOR_MAGENTA = 5,
-	VGA_COLOR_BROWN = 6,
-	VGA_COLOR_LIGHT_GREY = 7,
-	VGA_COLOR_DARK_GREY = 8,
-	VGA_COLOR_LIGHT_BLUE = 9,
-	VGA_COLOR_LIGHT_GREEN = 10,
-	VGA_COLOR_LIGHT_CYAN = 11,
-	VGA_COLOR_LIGHT_RED = 12,
-	VGA_COLOR_LIGHT_MAGENTA = 13,
-	VGA_COLOR_LIGHT_BROWN = 14,
-	VGA_COLOR_WHITE = 15,
+enum vga_color
+{
+    VGA_COLOR_BLACK = 0,
+    VGA_COLOR_BLUE = 1,
+    VGA_COLOR_GREEN = 2,
+    VGA_COLOR_CYAN = 3,
+    VGA_COLOR_RED = 4,
+    VGA_COLOR_MAGENTA = 5,
+    VGA_COLOR_BROWN = 6,
+    VGA_COLOR_LIGHT_GREY = 7,
+    VGA_COLOR_DARK_GREY = 8,
+    VGA_COLOR_LIGHT_BLUE = 9,
+    VGA_COLOR_LIGHT_GREEN = 10,
+    VGA_COLOR_LIGHT_CYAN = 11,
+    VGA_COLOR_LIGHT_RED = 12,
+    VGA_COLOR_LIGHT_MAGENTA = 13,
+    VGA_COLOR_LIGHT_BROWN = 14,
+    VGA_COLOR_WHITE = 15,
 };
+
 char ascii_chars[128] = {
+    0, 0, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 
+    0, 0, 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', 
+    0, 0, 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`', 
+    0, '\\', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', 0, 
+    0, ' ', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+};
 
-    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 
+static char input_buffer[MAX_INPUT_LENGTH];
+static size_t input_length = 0;
 
-    16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 
+inline unsigned char inb(unsigned int port)
+{
+    unsigned char ret;
+    asm volatile("inb %%dx,%%al" : "=a"(ret) : "d"(port));
+    return ret;
+}
 
-    ' ', '!', '"', '#', '$', '%', '&', '\'', 
-
-    '(', ')', '*', '+', ',', '-', '.', '/', 
-
-    '0', '1', '2', '3', '4', '5', '6', '7', 
-
-    '8', '9', ':', ';', '<', '=', '>', '?', 
-
-    '@', 'A', 'B', 'C', 'D', 'E', 'F', 'G',
-
-    'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 
-
-    'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 
-
-    'X', 'Y', 'Z', '[', '\\', ']', '^', '_', 
-
-    '`', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 
-
-    'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 
-
-    'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 
-
-    'x', 'y', 'z', '{', '|', '}', '~', 127 };
-
-static void get_input_char(){
-	uint8_t scancode = inb(0x60);
-
-
-    if (scancode == 0x1C) { 
-        terminal_writestring("\n"); 
-    } else {
-        if (scancode < 128) {
-            terminal_writestring(ascii_chars[scancode]);
-
-        } 
+int strcmp(const char *s1, const char *s2) {
+    while (*s1 && (*s1 == *s2)) {
+        s1++;
+        s2++;
     }
+    return *(unsigned char *)s1 - *(unsigned char *)s2;
 }
 
-static inline uint8_t vga_entry_color(enum vga_color fg, enum vga_color bg) 
+static inline uint8_t vga_entry_color(enum vga_color fg, enum vga_color bg)
 {
-	return fg | bg << 4;
+    return fg | bg << 4;
 }
 
-static inline uint16_t vga_entry(unsigned char uc, uint8_t color) 
+static inline uint16_t vga_entry(unsigned char uc, uint8_t color)
 {
-	return (uint16_t) uc | (uint16_t) color << 8;
+    return (uint16_t)uc | (uint16_t)color << 8;
 }
 
-size_t strlen(const char* str) 
+size_t strlen(const char *str)
 {
-	size_t len = 0;
-	while (str[len])
-		len++;
-	return len;
+    size_t len = 0;
+    while (str[len])
+        len++;
+    return len;
 }
 
 static const size_t VGA_WIDTH = 80;
@@ -100,66 +86,107 @@ static const size_t VGA_HEIGHT = 25;
 size_t terminal_row;
 size_t terminal_column;
 uint8_t terminal_color;
-uint16_t* terminal_buffer;
+uint16_t *terminal_buffer;
 
-void terminal_initialize(void) 
+void terminal_initialize(void)
 {
-	terminal_row = 0;
-	terminal_column = 0;
-	terminal_color = vga_entry_color(VGA_COLOR_GREEN, VGA_COLOR_BLACK);
-	terminal_buffer = (uint16_t*) 0xB8000;
-	for (size_t y = 0; y < VGA_HEIGHT; y++) {
-		for (size_t x = 0; x < VGA_WIDTH; x++) {
-			const size_t index = y * VGA_WIDTH + x;
-			terminal_buffer[index] = vga_entry(' ', terminal_color);
-		}
-	}
+    terminal_row = 0;
+    terminal_column = 0;
+    terminal_color = vga_entry_color(VGA_COLOR_GREEN, VGA_COLOR_BLACK);
+    terminal_buffer = (uint16_t *)0xB8000;
+    for (size_t y = 0; y < VGA_HEIGHT; y++)
+    {
+        for (size_t x = 0; x < VGA_WIDTH; x++)
+        {
+            const size_t index = y * VGA_WIDTH + x;
+            terminal_buffer[index] = vga_entry(' ', terminal_color);
+        }
+    }
 }
 
-void terminal_setcolor(uint8_t color) 
+void terminal_setcolor(uint8_t color)
 {
-	terminal_color = color;
+    terminal_color = color;
 }
 
-void terminal_putentryat(char c, uint8_t color, size_t x, size_t y) 
+void terminal_putentryat(char c, uint8_t color, size_t x, size_t y)
 {
-	const size_t index = y * VGA_WIDTH + x;
-	terminal_buffer[index] = vga_entry(c, color);
+    const size_t index = y * VGA_WIDTH + x;
+    terminal_buffer[index] = vga_entry(c, color);
 }
 
-void terminal_putchar(char c) 
-{	
-	if(c == '\n') {
-	terminal_column= 0;
-	terminal_row += 1;
-}
-	terminal_putentryat(c, terminal_color, terminal_column, terminal_row);
-	if (++terminal_column == VGA_WIDTH) {
-		terminal_column = 0;
-		if (++terminal_row == VGA_HEIGHT)
-			terminal_row = 0;
-	}
-}
-
-void terminal_write(const char* data, size_t size) 
+void terminal_putchar(char c)
 {
-	for (size_t i = 0; i < size; i++){
-		terminal_putchar(data[i]);
-	}
+    if (c == '\n')
+    {
+        terminal_column = 0;
+        terminal_row += 1;
+    }
+    terminal_putentryat(c, terminal_color, terminal_column, terminal_row);
+    if (++terminal_column == VGA_WIDTH)
+    {
+        terminal_column = 0;
+        if (++terminal_row == VGA_HEIGHT)
+            terminal_row = 0;
+    }
 }
 
-void terminal_writestring(const char* data) 
+void terminal_write(const char *data, size_t size)
 {
-	terminal_write(data, strlen(data));
+    for (size_t i = 0; i < size; i++)
+    {
+        terminal_putchar(data[i]);
+    }
 }
 
-void kernel_main(void) 
+void terminal_writestring(const char *data)
 {
-	/* Initialize terminal interface */
-	terminal_initialize();
+    terminal_write(data, strlen(data));
+}
 
-	terminal_writestring("Hello, Welcome to Akira World!\n");
-	while(true)
-	get_input_char();
-	
+static void get_input_char()
+{
+    uint8_t scancode = inb(0x60);
+    if (scancode & 0x80) return; // key release hence ignored
+
+    if (scancode == 0x1C) // Enter key
+    {
+        terminal_putchar('\n');
+        input_buffer[input_length] = '\0'; // Null-terminate the string
+
+        if (strcmp(input_buffer, "hello") == 0) {
+            terminal_writestring("HI, I am Akira OS\n");
+        }
+        else if (strcmp(input_buffer, "help") == 0) {
+            terminal_writestring("Available commands:\n1) hello - get the greet message\n2) help - see available commands\n");
+        }
+        else {
+            terminal_writestring("Unrecognized command, this OS is currently in development phase\n");
+        }
+
+        // Reset input length for the next command
+        input_length = 0;
+    }
+    else
+    {
+        if (scancode < 128 && input_length < MAX_INPUT_LENGTH - 1) // Check for buffer overflow
+        {
+            char temp[2];
+            temp[0]= ascii_chars[scancode];
+            temp[1]='\0';
+            terminal_writestring(temp);
+            input_buffer[input_length] = temp[0];
+            input_length++;
+        }
+    }
+}
+
+void kernel_main(void)
+{
+    /* Initialize terminal interface */
+    terminal_initialize();
+
+    terminal_writestring("Hello, Welcome to Akira OS!\n");
+    while (true)
+        get_input_char();
 }
