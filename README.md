@@ -13,8 +13,8 @@ Welcome to **Akira OS**, a lightweight operating system built using Assembly and
 ![Screenshot 2025-03-09 205820](https://github.com/user-attachments/assets/60ecd60e-13bc-4e30-865e-6a2ffe5623b2)
 
 ### How to install
-Install QEMU , and then use the following command to start your new operating system.
-$qemu-system-i386 -cdrom myos.iso
+Install QEMU , and then use the following command to start new operating system. <br> <br>
+`$ qemu-system-i386 -cdrom myos.iso`
 
 ### Select the *myos option
 ![Screenshot 2025-03-09 205749](https://github.com/user-attachments/assets/126fcff3-f22f-4b93-8ab7-4c3d4f2e5e55)
