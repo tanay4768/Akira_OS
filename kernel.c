@@ -153,7 +153,7 @@ static void get_input_char()
 
     if (scancode & 0x80) {
         // Key release event
-        key_states[scancode & 0x7F] = false; // Mark the key as released
+        key_states[scancode & 0x7F] = false; 
         return;
 
     }
