@@ -17,7 +17,7 @@ Install QEMU , and then use the following command to start new operating system.
 `$ ./start.sh`
 
 ### Select the *akira_os option
-![Screenshot 2025-03-09 205749](https://github.com/user-attachments/assets/126fcff3-f22f-4b93-8ab7-4c3d4f2e5e55)
+![Screenshot 2025-03-12 160221](https://github.com/user-attachments/assets/e7a75de8-80e1-4010-8936-e2abada8fdcf)
 
 ### Try above available commands
 ![Screenshot 2025-03-09 225528](https://github.com/user-attachments/assets/96ebe61f-37b7-49b9-9055-87cf11b58cff)
